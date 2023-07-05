@@ -23,4 +23,4 @@
 
 :local date [ $replaceChar [ /system/clock/get date ] "-" "" ]
 :local time [ $replaceChar [ /system/clock/get time ] ":" "" ]
-:global timestamp ($date.$time)
+:global timestamp "$date-$time"
