@@ -1,6 +1,6 @@
 # Mikrotik RouterOS Scripts Collection
 
-**[Backup & Auto Upgrade](#backup-&-auto-upgrade)**<br>
+**[Backup & Auto Upgrade](#backup--auto-upgrade)**<br>
 **[Download RouterOS Packages for CAPs](#download-routeros-packages-for-caps-on-a-capsman)**
 
 ## Backup & Auto Upgrade
@@ -69,4 +69,17 @@
 	set package-path=/___/capsman-routeros upgrade-policy=suggest-same-version
 	```
 
-4. Optional: Add the [upgrade-firmware script](https://github.com/sebastian13/mikrotik-routeros-scripts/blob/main/upgrade-firmware.rsc) to the cap and set a startup scheduler.
+4. Optional: Add the [upgrade-firmware script](https://github.com/sebastian13/mikrotik-routeros-scripts/blob/main/upgrade-firmware.rsc) to the cap and set a startup scheduler:
+
+    ```
+    /system script
+	:foreach Script in={ "upgrade-firmware"  } do={
+	    :if ([:len [ find where name=$Script ]] = 0) do={ add name=$Script }
+	    set numbers=[find where name=$Script] source=([ \
+	        /tool fetch \
+	        url="https://raw.githubusercontent.com/sebastian13/mikrotik-routeros-scripts/main/$Script.rsc" \
+	        output=user as-value]->"data");
+	};
+	/system scheduler
+	add name=upgrade-firmware on-event=":delay 30s\n/system script run upgrade-firmware" start-time=startup
+    ```
