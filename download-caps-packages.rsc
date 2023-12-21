@@ -23,13 +23,20 @@
 # Delete old downloads
 /file/remove [ find type=package name~"capsman*" ]
 
+# Starting from RouterOS version 7.13, drivers for older wireless and 60GHz interfaces are
+# part of the separate "wireless" package. The existing "wifiwave2" package has been divided
+# into distinct packages: "wifi-qcom" and "wifi-qcom-ac".
+# https://forum.mikrotik.com/viewtopic.php?t=202423
+
 :foreach architecture in={ "arm";
                            "arm64";
                            "mipsbe" } do={
-	/tool fetch mode=http \
-	url="https://download.mikrotik.com/routeros/$latest/routeros-$latest-$architecture.npk" \
-	dst-path="$dir/routeros-$latest-$architecture.npk"
-	/tool fetch mode=http \
-	url="https://download.mikrotik.com/routeros/$latest/wifiwave2-$latest-$architecture.npk" \
-	dst-path="$dir/wifiwave2-$latest-$architecture.npk"
+     :foreach package in={ "routeros";
+                           "wireless";
+                           "wifi-qcom";
+                           "wifi-qcom-ac" } do={
+        /tool fetch mode=http \
+        url="https://download.mikrotik.com/routeros/$latest/$package-$latest-$architecture.npk" \
+        dst-path="$dir/$package-$latest-$architecture.npk"
+     }
 }
