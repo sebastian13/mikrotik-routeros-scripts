@@ -35,7 +35,7 @@
                            "wireless";
                            "wifi-qcom";
                            "wifi-qcom-ac" } do={
-        /tool fetch mode=http \
+        /tool fetch mode=https \
         url="https://download.mikrotik.com/routeros/$latest/$package-$latest-$architecture.npk" \
         dst-path="$dir/$package-$latest-$architecture.npk"
      }
