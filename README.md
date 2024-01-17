@@ -58,8 +58,8 @@
 
 	```
 	/system scheduler
-	add name=download-caps-routeros on-event=":delay 120s\
-	    \n/system script run download-caps-routeros" start-time=startup
+	add name=download-caps-packages on-event=":delay 120s\
+	    \n/system script run download-caps-packages" start-time=startup
 	```
 
 3. Set the Package-Path
