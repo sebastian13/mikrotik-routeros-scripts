@@ -49,7 +49,7 @@
 # Send E-Mail
 /tool e-mail send to=$recipient \
 subject="Export-Compact | $identity" \
-body="Please find the Export Compact attached!\n\nA Cloud-Backup was crated.\nName: $backupn \nTime: $backupd \nRouterOS: $backupr \nSize: $backups \nDownload key: $backupk \n" \
+body="Please find the Export Compact attached!\n\nA Cloud-Backup was created.\nName: $backupn \nTime: $backupd \nRouterOS: $backupr \nSize: $backups \nDownload key: $backupk \n" \
 file=$filename
 :delay 10s;
 /file remove $filename
