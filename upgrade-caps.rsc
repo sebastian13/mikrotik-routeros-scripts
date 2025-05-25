@@ -7,13 +7,27 @@
 #  https://github.com/sebastian13/mikrotik-routeros-scripts
 #
 
+# Helper function to log and put messages
+:local logput do={ :log info $1; :put $1 }
+
 :local installed [/system package get routeros version]
 
-# Initiate Upgrade
-:local outdatedcaps [/caps-man remote-cap find where version!=$installed]
+# Initiate Upgrade on outdated cAPs (old CAPs Manager)
+/caps-man/remote-cap
+:local outdatedcaps [find where version!=$installed]
 
 :foreach i in=$outdatedcaps do={
-  :put "Initiate Upgrade on $i"
-  /caps-man remote-cap upgrade numbers=$i
-  :delay 60s
+  $logput ("[INFO] Initiate Upgrade on " . [get value-name=identity $i])
+  upgrade numbers=$i
+  :delay 120s
+};
+
+# Initiate Upgrade on outdated cAPs (new CAPs Manager)
+/interface/wifi/capsman/remote-cap/
+:local outdatedWifiCaps [find where version!=$installed]
+
+:foreach i in=$outdatedWifiCaps do={
+  $logput ("[INFO] Initiate Upgrade on " . [get value-name=identity $i])
+  upgrade numbers=$i
+  :delay 120s
 };
