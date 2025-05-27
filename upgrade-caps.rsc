@@ -13,14 +13,20 @@
 :local installed [/system package get routeros version]
 
 # Initiate Upgrade on outdated cAPs (old CAPs Manager)
-/caps-man/remote-cap
-:local outdatedcaps [find where version!=$installed]
+:if ([/system/package/find where name="wireless" disabled=no]) do={
+    :put message="Old wireless driver detected";
 
-:foreach i in=$outdatedcaps do={
-  $logput ("[INFO] Initiate Upgrade on " . [get value-name=identity $i])
-  upgrade numbers=$i
-  :delay 120s
-};
+    [:parse "
+      /caps-man/remote-cap
+      :local outdatedcaps [find where version!=$installed]
+
+      :foreach i in=\$outdatedcaps do={
+        \$logput (\"[INFO] Initiate Upgrade on \" . [get value-name=identity \$i])
+        upgrade numbers=\$i
+        :delay 120s
+      };
+    "]
+}
 
 # Initiate Upgrade on outdated cAPs (new CAPs Manager)
 /interface/wifi/capsman/remote-cap/

@@ -21,7 +21,8 @@
 	                     "globals";
 	                     "slack";
 	                     "upgrade-firmware";
-	                     "upgrade-routeros"  } do={
+	                     "upgrade-routeros";
+						 "upgrade-routeros-skipfirstmajor" } do={
 	    :if ([:len [ find where name=$Script ]] = 0) do={ add name=$Script }
 	    set numbers=[find where name=$Script] source=([ \
 	        /tool fetch \
@@ -39,13 +40,14 @@
 	add name=backup2mail on-event=backup2mail start-time=06:00:00 interval=4w
 	```
 
-## Download RouterOS Packages for CAPs on a CAPsMAN
+## Download RouterOS Packages & Upgrade CAPs on CAPsMAN
 
-1. Download **download-caps-routeros**
+1. Download **download-caps-routeros** and **upgrade-caps**
 
 	```
 	/system script
-	:foreach Script in={ "download-caps-packages"  } do={
+	:foreach Script in={ "download-caps-packages";
+						 "upgrade-caps"  } do={
 	    :if ([:len [ find where name=$Script ]] = 0) do={ add name=$Script }
 	    set numbers=[find where name=$Script] source=([ \
 	        /tool fetch \
@@ -60,13 +62,16 @@
 	/system scheduler
 	add name=download-caps-packages on-event=":delay 120s\
 	    \n/system script run download-caps-packages" start-time=startup
+	add name=upgrade-caps comment="Upgrade CAPs every Monday" \
+	    on-event=upgrade-caps \
+        start-date=2025-01-06 start-time=04:00:00 interval=1w
 	```
 
 3. Set the Package-Path
 
 	```
 	/caps-man manager
-	set package-path=/___/capsman-routeros upgrade-policy=suggest-same-version
+	set package-path=/___/capsman-routeros upgrade-policy=none
 	```
 
 4. Optional: Add the [upgrade-firmware script](https://github.com/sebastian13/mikrotik-routeros-scripts/blob/main/upgrade-firmware.rsc) to the cap and set a startup scheduler:
