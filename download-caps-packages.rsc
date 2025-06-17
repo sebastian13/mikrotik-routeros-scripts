@@ -13,7 +13,7 @@
 :local dir "/sd1/capsman-packages"
 
 # Set Package Path if required, set policy to none if using 'upgrade-caps' script
-/caps-man/manager/set package-path="$dir" upgrade-policy=none
+/interface/wifi/capsman/set package-path="$dir" upgrade-policy=none
 
 :local installed [/system package get value-name=version [find where name="routeros"]]
 
