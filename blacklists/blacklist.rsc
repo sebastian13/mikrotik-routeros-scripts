@@ -1,5 +1,14 @@
 /ip firewall address-list
+
 :local update do={
+    
+    # Create an index of currently blacklisted IPs
+    :local blacklisted
+    :put "Querying currently blacklisted IPs. This may take a few seconds ..."
+    :foreach id in=[find list=blacklist description=$description] do={
+        :set ($blacklisted->[get $id address]) $id
+    }
+
     :do {
         :local data ([:tool fetch url=$url mode=https output=user as-value]->"data")
         :set data ($data . "\n")
@@ -31,8 +40,16 @@
                     :if ([:pick $addr 0 8] = "0.0.0.0") do={
                         :put "skip 0.0.0.0"
                     } else={
-                        :put ("Adding " . $addr . " to blacklist of " . $description)
-                        :do { add list=blacklist address=$addr comment=$description timeout=1d } on-error={}
+
+                        :local existing ($blacklisted->"$addr")
+
+                        :if ([:typeof $existing] = "nothing" || [:typeof $existing] = "nil") do={
+                            :put ("Adding " . $addr . " to blacklist of " . $description)
+                            :do { add list=blacklist address=$addr comment=$description timeout=1d } on-error={}
+                        } else={
+                            :put ("Update Timeout of " . $addr . " in " . $description)
+                            set $existing comment=$description timeout=1d
+                        }
                     }
                 }
             }
@@ -41,4 +58,4 @@
 }
 
 $update url=https://www.dshield.org/block.txt description=DShield delimiter=("\t") cidr="/24"
-$update url=https://www.spamhaus.org/drop/drop.txt description="Spamhaus" delimiter=" " cidr=""
+#$update url=https://www.spamhaus.org/drop/drop.txt description="Spamhaus" delimiter=" " cidr=""
