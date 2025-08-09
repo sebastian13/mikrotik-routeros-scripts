@@ -4,7 +4,7 @@
     
     # Create an index of currently blacklisted IPs
     :local blacklisted
-    :put "Querying currently blacklisted IPs. This may take a few seconds ..."
+    :put "Querying currently blacklisted IPs of $description. This may take a few seconds ..."
     :foreach id in=[find list=blacklist description=$description] do={
         :set ($blacklisted->[get $id address]) $id
     }
@@ -19,43 +19,45 @@
             :set data [:pick $data ($nl+1) [:len $data]]
 
             :local skip false
+
+            # Skip empty or command lines
             :if ([:len $line] = 0) do={ :set skip true }
             :if ([:pick $line 0 1] = "#") do={ :set skip true }
             :if ([:pick $line 0 1] = ";") do={ :set skip true }
 
+            :local delp [:find $line $delimiter]
+            :if ([:typeof $delp] = "nil") do={ :set delp [:len $line] }
+
+            :local addr [:pick $line 0 $delp]
+
+            # Skip invalid IPs
+            :if (!($addr ~ "^[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}")) do={ :set skip true }
+
+            # Skip 0.0.0.0
+            :if ($addr = "0.0.0.0" || $addr = "0.0.0.0/0") do={ :set skip true }
+
+            # Add CIDR if defined
+            :if ([:typeof [:find $addr "/"]] = "nil") do={
+                :if ([:len $cidr] > 0) do={ :set addr ($addr . $cidr) }
+            }
+
             :if ($skip = false) do={
-                :local delp [:find $line $delimiter]
-                :if ([:typeof $delp] = "nil") do={ :set delp [:len $line] }
+                :local existing ($blacklisted->"$addr")
 
-                :local addr [:pick $line 0 $delp]
-
-                :local isIP false
-                :if ($addr ~ "^[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}") do={ :set isIP true }
-
-                :if ($isIP = true) do={
-                    :if ([:typeof [:find $addr "/"]] = "nil") do={
-                        :if ([:len $cidr] > 0) do={ :set addr ($addr . $cidr) }
-                    }
-
-                    :if ([:pick $addr 0 8] = "0.0.0.0") do={
-                        :put "skip 0.0.0.0"
-                    } else={
-
-                        :local existing ($blacklisted->"$addr")
-
-                        :if ([:typeof $existing] = "nothing" || [:typeof $existing] = "nil") do={
-                            :put ("Adding " . $addr . " to blacklist of " . $description)
-                            :do { add list=blacklist address=$addr comment=$description timeout=1d } on-error={}
-                        } else={
-                            :put ("Update Timeout of " . $addr . " in " . $description)
-                            set $existing comment=$description timeout=1d
-                        }
-                    }
+                :if ([:typeof $existing] = "nothing" || [:typeof $existing] = "nil") do={
+                    :put ("  * Adding " . $addr . " to blacklist " . $description)
+                    :do { add list=blacklist address=$addr comment=$description timeout=1d } on-error={}
+                    :log info message="Added $addr to address list blacklist, reported by $description."
+                } else={
+                    :put ("  > Update " . $addr . " in blacklist " . $description)
+                    set $existing comment=$description timeout=1d
                 }
             }
         }
     }
+    :put "Blocklist $description was imported sucessfully."
+    :put ""
 }
 
 $update url=https://www.dshield.org/block.txt description=DShield delimiter=("\t") cidr="/24"
-#$update url=https://www.spamhaus.org/drop/drop.txt description="Spamhaus" delimiter=" " cidr=""
+$update url=https://www.spamhaus.org/drop/drop.txt description=Spamhaus delimiter=" " cidr=""
