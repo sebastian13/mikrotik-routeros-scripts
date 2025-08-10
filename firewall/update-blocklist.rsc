@@ -2,11 +2,11 @@
 
 :local update do={
     
-    # Create an index of currently blacklisted IPs
-    :local blacklisted
-    :put "Querying currently blacklisted IPs of $description. This may take a few seconds ..."
-    :foreach id in=[find list=blacklist description=$description] do={
-        :set ($blacklisted->[get $id address]) $id
+    # Create an index of currently blocklisted IPs
+    :local blocklisted
+    :put "Querying currently blocklisted IPs of $description. This may take a few seconds ..."
+    :foreach id in=[find list=blocklist description=$description] do={
+        :set ($blocklisted->[get $id address]) $id
     }
 
     :do {
@@ -42,15 +42,15 @@
             }
 
             :if ($skip = false) do={
-                :local existing ($blacklisted->"$addr")
+                :local existing ($blocklisted->"$addr")
 
                 :if ([:typeof $existing] = "nothing" || [:typeof $existing] = "nil") do={
-                    :put ("  * Adding " . $addr . " to blacklist " . $description)
-                    :do { add list=blacklist address=$addr comment=$description timeout=1d } on-error={}
-                    :log info message="Added $addr to address list blacklist, reported by $description."
+                    :put ("  * Adding " . $addr . " to blocklist " . $description)
+                    :do { add list=blocklist address=$addr comment=$description timeout=26h } on-error={}
+                    :log info message="Added $addr to address list blocklist, reported by $description."
                 } else={
-                    :put ("  > Update " . $addr . " in blacklist " . $description)
-                    set $existing comment=$description timeout=1d
+                    :put ("  > Update " . $addr . " in blocklist " . $description)
+                    set $existing comment=$description timeout=26h
                 }
             }
         }
