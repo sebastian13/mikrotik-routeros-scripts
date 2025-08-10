@@ -10,7 +10,13 @@
     }
 
     :do {
-        :local data ([:tool fetch url=$url mode=https output=user as-value]->"data")
+        :local data
+        :if ([:len $httpAuth] > 0) do={
+            :set data ([:tool fetch url=$url mode=https http-auth-scheme=$httpAuth user=$user \
+                         password=$password idle-timeout="30s" output=user as-value]->"data")
+        } else={
+            :set data ([:tool fetch url=$url mode=https output=user as-value]->"data")
+        }
         :set data ($data . "\n")
 
         :while ([:len $data] != 0) do={
@@ -27,6 +33,15 @@
 
             :local delp [:find $line $delimiter]
             :if ([:typeof $delp] = "nil") do={ :set delp [:len $line] }
+
+            :local addr [:pick $line 0 $delp]
+
+            :local delp [:find $line $delimiter]
+            :if ([:len $delimiter] = 0) do={ 
+                :set delp [:len $line] 
+            } else={
+                :if ([:typeof $delp] = "nil") do={ :set delp [:len $line] }
+            }
 
             :local addr [:pick $line 0 $delp]
 
@@ -61,3 +76,10 @@
 
 $update url=https://www.dshield.org/block.txt description=DShield delimiter=("\t") cidr="/24"
 $update url=https://www.spamhaus.org/drop/drop.txt description=Spamhaus delimiter=" " cidr=""
+
+# Example: Basic Authentication 
+# Crowdsec Raw Integration
+# :local crowdsecUsername ""
+# :local crowdsecPassword ""
+# :local crowdsecRawUrl "https://admin.api.crowdsec.net/v1/integrations/___/content"
+# $update url=$crowdsecRawUrl httpAuth=basic user=$crowdsecUsername password=$crowdsecPassword description=CrowdSec delimiter="" cidr=""
