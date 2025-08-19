@@ -27,8 +27,8 @@ The script will not delete any address, rather, it sets a timeout of 26h when cr
 
 # Set raw block rule. They need to be enabled manually.
 /ip/firewall/raw/
-add disabled=yes action=drop chain=prerouting in-interface-list=WAN log=yes log-prefix="DROP BLOCKLISTED OUT" src-address-list=blacklist
-add disabled=yes action=drop chain=output dst-address-list=blacklist log=yes log-prefix="DROP BLOCKLISTED IN" out-interface-list=WAN
+add disabled=yes action=drop src-address-list=blocklist chain=prerouting in-interface-list=WAN log=yes log-prefix="DROP BLOCKLISTED OUT" 
+add disabled=yes action=drop dst-address-list=blocklist chain=output out-interface-list=WAN log=yes log-prefix="DROP BLOCKLISTED IN"   
 ```
 
 ### Ressources
