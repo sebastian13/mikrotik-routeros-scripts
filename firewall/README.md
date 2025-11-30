@@ -11,24 +11,28 @@ The script will not delete any address, rather, it sets a timeout of 26h when cr
 {
     :local script update-blocklist
     /system script
-    :if ([:len [ find where name=$script ]] = 0) do={ add name=$script policy=read,write comment="github.com/sebastian13" }
-    set numbers=[find where name=$script] source=([ \
-    /tool fetch \
-    url="https://raw.githubusercontent.com/sebastian13/mikrotik-routeros-scripts/main/firewall/$script.rsc" \
-        output=user as-value]->"data");
+    :if ([:len [ find where name=$script ]] != 0) do={ set \
+        numbers=[find where name=$script] name=("$script-" . [/system clock get date])}
+    add name=$script policy=ftp,read,write,test \
+        comment="github.com/sebastian13" source=([ \
+            /tool fetch url="https://raw.githubusercontent.com/sebastian13/mikrotik-routeros-scripts/main/firewall/$script.rsc" \
+                output=user as-value]->"data");
 }
 
 # Set Schedule
 {
     :local script update-blocklist
     /system/scheduler/
-    add name=$script policy=read,write interval=1d start-time=05:15:00 on-event="$script"
+    :if ([:len [ find where name=$script ]] = 0) do={ add name=$script }
+    set $script policy=ftp,read,write,test interval=1d start-time=05:15:00 on-event="$script"
 }
 
 # Set raw block rule. They need to be enabled manually.
 /ip/firewall/raw/
-add disabled=yes action=drop src-address-list=blocklist chain=prerouting in-interface-list=WAN log=yes log-prefix="DROP BLOCKLISTED IN" 
-add disabled=yes action=drop dst-address-list=blocklist chain=output out-interface-list=WAN log=yes log-prefix="DROP BLOCKLISTED OUT"   
+add disabled=yes action=drop src-address-list=blocklist chain=prerouting \
+    in-interface-list=WAN log=yes log-prefix="DROP BLOCKLISTED IN" 
+add disabled=yes action=drop dst-address-list=blocklist chain=output \
+    out-interface-list=WAN log=yes log-prefix="DROP BLOCKLISTED OUT"   
 ```
 
 ### Ressources
