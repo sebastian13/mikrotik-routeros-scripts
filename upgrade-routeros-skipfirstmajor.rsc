@@ -38,7 +38,12 @@ $logput ("[INFO] Latest version: " . $newVer)
     # e.g. 7.18 will be skipped, but 7.18.1 will be installed
     :if ($dotCount = 2) do={
         $logput ("[OK] Patch Release detected, installing update: " . $newVer)
-        /system script run backup2mail
+        :if ([:len [/system script find where name="backup2mail"]] > 0) do={
+            $logput "[INFO] Running optional backup script: backup2mail"
+            /system script run backup2mail
+        } else={
+            $logput "[WARN] Optional backup script not found: backup2mail. Continuing without backup."
+        }
         /system package update install
     } else={
         $logput ("[SKIP] Major release without patch, skipping: " . $newVer)
