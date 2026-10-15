@@ -23,7 +23,7 @@
 	                     "slack";
 	                     "upgrade-firmware";
 	                     "upgrade-routeros";
-						 "upgrade-routeros-skipfirstmajor" } do={
+	                     "upgrade-routeros-skipfirstmajor" } do={
 	    :if ([:len [ find where name=$Script ]] = 0) do={ add name=$Script }
 	    set numbers=[find where name=$Script] source=([ \
 	        /tool fetch \
