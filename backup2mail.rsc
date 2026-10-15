@@ -7,9 +7,23 @@
 #  https://github.com/sebastian13/mikrotik-routeros-scripts
 #
 
-# Please set a secure password and provide the recipient addresses
-:local backupPassword "______"
-:local recipient "___@___._"
+# Load variables from a dedicated config script (backup2mail.conf)
+# Keep this script logic-only so updates do not overwrite environment values.
+:global b2mRecipient
+:global b2mBackupPassword
+
+:do {
+  /system script run backup2mail.conf
+} on-error={
+  :error "backup2mail.conf not found or failed"
+}
+
+# Validate required values loaded from config.
+:if ([:len $b2mRecipient] = 0) do={ :error "Missing b2mRecipient in backup2mail.conf" }
+:if ([:len $b2mBackupPassword] = 0) do={ :error "Missing b2mBackupPassword in backup2mail.conf" }
+
+:local recipient $b2mRecipient
+:local backupPassword $b2mBackupPassword
 
 /system/script/run globals
 

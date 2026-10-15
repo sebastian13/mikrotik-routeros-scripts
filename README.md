@@ -18,6 +18,7 @@
 	```
 	/system script
 	:foreach Script in={ "backup2mail";
+	                     "backup2mail.conf.example";
 	                     "globals";
 	                     "slack";
 	                     "upgrade-firmware";
@@ -31,7 +32,18 @@
 	};
 	```
 
-3. Create schedulers
+3. Create backup2mail.conf (required)
+
+	`backup2mail` now loads secrets from a separate script and stops immediately if it is missing.
+
+	```
+	/system script
+	add name=backup2mail.conf source=":global b2mRecipient \"admin@example.com\"\n:global b2mBackupPassword \"CHANGE_ME_TO_A_LONG_RANDOM_PASSWORD\""
+	```
+
+	You can also use [backup2mail.conf.example](backup2mail.conf.example) as template.
+
+4. Create schedulers
 
 	```
 	/system scheduler
@@ -47,7 +59,7 @@
 	```
 	/system script
 	:foreach Script in={ "download-caps-packages";
-						 "upgrade-caps"  } do={
+	                     "upgrade-caps"  } do={
 	    :if ([:len [ find where name=$Script ]] = 0) do={ add name=$Script }
 	    set numbers=[find where name=$Script] source=([ \
 	        /tool fetch \
