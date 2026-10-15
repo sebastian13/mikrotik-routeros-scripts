@@ -11,6 +11,7 @@
 # Keep this script logic-only so updates do not overwrite environment values.
 :global b2mRecipient
 :global b2mBackupPassword
+:global b2mHealthcheckUrl
 
 :do {
   /system script run backup2mail.conf
@@ -24,6 +25,17 @@
 
 :local recipient $b2mRecipient
 :local backupPassword $b2mBackupPassword
+:local healthcheckUrl $b2mHealthcheckUrl
+:local cloudBackupOk true
+
+# Notify Healthchecks that the job started.
+:if ([:len $healthcheckUrl] > 0) do={
+  :do {
+    /tool fetch url=($healthcheckUrl . "/start") output=user as-value
+  } on-error={
+    :log warning "Failed to ping healthcheck start URL"
+  }
+}
 
 /system/script/run globals
 
@@ -51,6 +63,7 @@
   }
 } on-error={
   :log error ("Failed uploading backup for " . $identity . " to cloud.");
+  :set cloudBackupOk false;
 }
 
 # Get latest Cloud-Backup Details
@@ -67,3 +80,15 @@ body="Please find the Export Compact attached!\n\nA Cloud-Backup was created.\nN
 file="$filename.rsc"
 :delay 10s;
 /file remove "$filename.rsc"
+
+# Notify Healthchecks only when backup finished successfully.
+:if (($cloudBackupOk = true) and ([:len $healthcheckUrl] > 0)) do={
+  :do {
+    /tool fetch url=$healthcheckUrl output=user as-value
+  } on-error={
+    :log warning "Failed to ping healthcheck success URL"
+  }
+}
+
+# Cleanup initialized global variables
+/system script environment remove [find where name~"^b2m"]

@@ -4,3 +4,4 @@
 
 :global b2mRecipient "admin@example.com"
 :global b2mBackupPassword ""
+:global b2mHealthcheckUrl "https://healthchecks.example.com/ping/00000000-0000-0000-0000-000000000000"

@@ -38,8 +38,10 @@
 
 	```
 	/system script
-	add name=backup2mail.conf source=":global b2mRecipient \"admin@example.com\"\n:global b2mBackupPassword \"CHANGE_ME_TO_A_LONG_RANDOM_PASSWORD\""
+	add name=backup2mail.conf source=":global b2mRecipient \"admin@example.com\"\n:global b2mBackupPassword \"\"\n:global b2mHealthcheckUrl \"https://healthchecks.example.com/ping/00000000-0000-0000-0000-000000000000\""
 	```
+
+	`b2mHealthcheckUrl` is optional. Set it to `""` to disable healthcheck pings.
 
 	You can also use [backup2mail.conf.example](backup2mail.conf.example) as template.
 
