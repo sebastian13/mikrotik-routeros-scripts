@@ -67,19 +67,31 @@
 }
 
 # Get latest Cloud-Backup Details
-:local backupn [/system backup cloud get 0 name ];
-:local backupk [/system backup cloud get 0 secret-download-key ];
-:local backupd [/system backup cloud get 0 date ];
-:local backupr [/system backup cloud get 0 ros-version ];
-:local backups [/system backup cloud get 0 size ];
+:local backupn [:tostr [/system backup cloud get 0 name ]]
+:local backupk [:tostr [/system backup cloud get 0 secret-download-key ]]
+:local backupd [:tostr [/system backup cloud get 0 date ]]
+:local backupr [:tostr [/system backup cloud get 0 ros-version ]]
+:local backups [:tostr [/system backup cloud get 0 size ]]
 
-# Send E-Mail
-/tool e-mail send to=$recipient \
-subject="Export-Compact | $identity" \
-body="Please find the Export Compact attached!\n\nA Cloud-Backup was created.\nName: $backupn \nTime: $backupd \nRouterOS: $backupr \nSize: $backups \nDownload key: $backupk \n" \
-file="$filename.rsc"
-:delay 10s;
-/file remove "$filename.rsc"
+# Build mail body using SMTP-compatible CRLF
+:local NL "\r\n"
+:local mailBody ("Please find the Export Compact attached!" . $NL . $NL)
+:set mailBody ($mailBody . "A Cloud-Backup was created." . $NL)
+:set mailBody ($mailBody . "Name: " . $backupn . $NL)
+:set mailBody ($mailBody . "Time: " . $backupd . $NL)
+:set mailBody ($mailBody . "RouterOS: " . $backupr . $NL)
+:set mailBody ($mailBody . "Size: " . $backups . $NL)
+:set mailBody ($mailBody . "Download key: " . $backupk . $NL)
+
+# Send e-mail
+/tool e-mail send \
+    to=$recipient \
+    subject=("Export-Compact | " . $identity) \
+    body=$mailBody \
+    file=($filename . ".rsc")
+
+:delay 10s
+/file remove ($filename . ".rsc")
 
 # Notify Healthchecks only when backup finished successfully.
 :if (($cloudBackupOk = true) and ([:len $healthcheckUrl] > 0)) do={
