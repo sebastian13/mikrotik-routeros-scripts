@@ -8,17 +8,19 @@
 1. Setup SMTP
 
 	```
+	/certificate settings set builtin-trust-anchors=trusted
 	/tool e-mail
 	set address=smtp.gmail.com from=___@gmail.com port=587 tls=starttls \
-	    user=___@gmail.com password=___
+	    user=___@gmail.com password=___ certificate-verification=yes
 	```
+
+	`builtin-trust-anchors` requires RouterOS 7.19+. On older versions import the CA certificates manually.
 
 2. Download the required scripts, **backup2mail**, **upgrade-firmware**, **upgrade-routeros**
 
 	```
 	/system script
 	:foreach Script in={ "backup2mail";
-	                     "backup2mail.conf.example";
 	                     "globals";
 	                     "slack";
 	                     "upgrade-firmware";
@@ -28,22 +30,29 @@
 	    set numbers=[find where name=$Script] source=([ \
 	        /tool fetch \
 	        url="https://raw.githubusercontent.com/sebastian13/mikrotik-routeros-scripts/main/$Script.rsc" \
-	        output=user as-value]->"data");
+	        check-certificate=yes output=user as-value]->"data");
 	};
 	```
 
-3. Create backup2mail.conf (required)
+3. Create the config file backup2mail.conf.rsc (required)
 
-	`backup2mail` now loads secrets from a separate script and stops immediately if it is missing.
+	`backup2mail` loads its settings from the **file** `backup2mail.conf.rsc` (or `flash/backup2mail.conf.rsc`).
+	Do not store them in a script: script sources are always part of `/export`, so the backup password would be mailed along with every export.
 
 	```
-	/system script
-	add name=backup2mail.conf source=":global b2mRecipient \"admin@example.com\"\n:global b2mBackupPassword \"\"\n:global b2mHealthcheckUrl \"https://healthchecks.example.com/ping/00000000-0000-0000-0000-000000000000\""
+	/file add name=backup2mail.conf.rsc contents=":global b2mRecipient \"admin@example.com\"\r\n:global b2mBackupPassword \"CHANGE-ME\"\r\n:global b2mHealthcheckUrl \"\"\r\n:global b2mMailDownloadKey true"
 	```
 
-	`b2mHealthcheckUrl` is optional. Set it to `""` to disable healthcheck pings.
+	Alternatively edit [backup2mail.conf.example.rsc](backup2mail.conf.example.rsc) locally and upload it as `backup2mail.conf.rsc` via WinBox or SCP.
 
-	You can also use [backup2mail.conf.example](backup2mail.conf.example) as template.
+	- `b2mHealthcheckUrl` is optional. Set it to `""` to disable healthcheck pings.
+	- `b2mMailDownloadKey` (default `true`) adds the cloud backup's secret download key to the mail. You need it to restore the backup onto replacement hardware. The key only allows downloading the *encrypted* backup, so store `b2mBackupPassword` in your password manager and nowhere else.
+
+	**Upgrading from an older version:** create the file as shown above and rotate the backup password, since it was part of every previous export. This applies to both older variants:
+	- password stored in the script `backup2mail.conf`: also remove that script with `/system script remove backup2mail.conf`
+	- password hardcoded directly in `backup2mail` (versions before October 2026): updating the script removes it, but older exports still contain it
+
+	**Note:** the mailed export still contains the source of *all other* scripts. Do not put credentials into any script source.
 
 4. Create schedulers
 
@@ -66,7 +75,7 @@
 	    set numbers=[find where name=$Script] source=([ \
 	        /tool fetch \
 	        url="https://raw.githubusercontent.com/sebastian13/mikrotik-routeros-scripts/main/$Script.rsc" \
-	        output=user as-value]->"data");
+	        check-certificate=yes output=user as-value]->"data");
 	};
 	```
 
@@ -97,7 +106,7 @@
 	    set numbers=[find where name=$Script] source=([ \
 	        /tool fetch \
 	        url="https://raw.githubusercontent.com/sebastian13/mikrotik-routeros-scripts/main/$Script.rsc" \
-	        output=user as-value]->"data");
+	        check-certificate=yes output=user as-value]->"data");
 	};
 	/system scheduler
 	add name=upgrade-firmware on-event=":delay 30s\n/system script run upgrade-firmware" start-time=startup
